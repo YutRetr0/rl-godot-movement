@@ -1,0 +1,27 @@
+; Engine configuration file.
+; It's best edited using the editor and not directly,
+; since the parameters that go here are not all obvious.
+;
+; Format:
+;   [section] ; section goes between []
+;   param=value ; assign values to parameters
+
+config_version=5
+
+[application]
+config/name="rl-godot-movement"
+run/main_scene="res://scenes/Arena.tscn"
+config/features=PackedStringArray("4.2")
+
+[display]
+window/size/viewport_width=1280
+window/size/viewport_height=720
+window/stretch/mode="disabled"
+
+[physics]
+common/physics_ticks_per_second=60
+common/physics_jitter_fix=0.5
+
+[rendering]
+renderer/rendering_method="forward_plus"
+textures/vram_compression/import_s3tc_bptc=true
