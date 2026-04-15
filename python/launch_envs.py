@@ -52,7 +52,7 @@ def main() -> None:
         processes.append(proc)
         print(f"Started env on port {port} with PID {proc.pid}")
 
-    def _shutdown(_signum, _frame):
+    def shutdown_handler(_signum, _frame):
         for proc in processes:
             if proc.poll() is None:
                 proc.terminate()
@@ -61,8 +61,8 @@ def main() -> None:
                 proc.wait(timeout=10)
         sys.exit(0)
 
-    signal.signal(signal.SIGINT, _shutdown)
-    signal.signal(signal.SIGTERM, _shutdown)
+    signal.signal(signal.SIGINT, shutdown_handler)
+    signal.signal(signal.SIGTERM, shutdown_handler)
 
     try:
         while True:
@@ -71,7 +71,7 @@ def main() -> None:
                 break
             time.sleep(1.0)
     finally:
-        _shutdown(None, None)
+        shutdown_handler(None, None)
 
 
 if __name__ == "__main__":

@@ -10,10 +10,10 @@ from gym_env import GodotGymEnv
 
 
 def make_env(port: int, host: str):
-    def _init() -> GodotGymEnv:
+    def _create_env() -> GodotGymEnv:
         return GodotGymEnv(host=host, port=port)
 
-    return _init
+    return _create_env
 
 
 def parse_args() -> argparse.Namespace:

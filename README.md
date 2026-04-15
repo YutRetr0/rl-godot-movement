@@ -4,7 +4,7 @@ Minimal Godot 4.x RL demo for 3D movement/navigation with a TCP API and Python P
 
 ## Target engine version
 
-- **Godot 4.2.2.stable** (project targets Godot 4.2.x)
+- **Godot 4.2.2-stable** (project targets Godot 4.2.x)
 
 ## Project layout
 
@@ -70,7 +70,7 @@ Request messages are binary little-endian:
 - **RESET**
   - `uint8 msg_type = 1`
   - `uint8 has_seed` (`0` or `1`)
-  - optional `int32 seed` when `has_seed=1`
+  - optional `int32 seed` when `has_seed=1` (signed payload, normalized to uint32 in Godot RNG)
 - **STEP**
   - `uint8 msg_type = 2`
   - `float32 action[4]`

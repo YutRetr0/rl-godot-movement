@@ -44,7 +44,9 @@ class GodotGymEnv(gym.Env[np.ndarray, np.ndarray]):
             )
         return obs.astype(np.float32), {}
 
-    def step(self, action: np.ndarray):
+    def step(
+        self, action: np.ndarray
+    ) -> tuple[np.ndarray, float, bool, bool, dict[str, Any]]:
         obs, reward, done = self.client.step(action)
         if obs.shape != (self.obs_dim,):
             raise ValueError(

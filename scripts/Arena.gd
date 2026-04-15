@@ -2,6 +2,7 @@ extends Node3D
 
 const MSG_RESET := 1
 const MSG_STEP := 2
+const MAX_SPAWN_ATTEMPTS := 16
 
 @export var bind_host: String = "127.0.0.1"
 @export var port: int = 9000
@@ -18,6 +19,8 @@ const MSG_STEP := 2
 @export var max_yaw_rate: float = 2.5
 @export var spawn_height: float = 1.0
 @export var target_height: float = 0.5
+@export var spawn_margin: float = 1.5
+@export var min_spawn_target_distance: float = 3.0
 
 @onready var agent: CharacterBody3D = $Agent
 @onready var target: Node3D = $Target
@@ -26,7 +29,7 @@ var rng := RandomNumberGenerator.new()
 var tcp_server := TCPServer.new()
 var peer: StreamPeerTCP = null
 var recv_buffer := PackedByteArray()
-var command_queue: Array = []
+var command_queue: Array[Dictionary] = []
 
 var stepping := false
 var step_frames_left := 0
@@ -43,7 +46,13 @@ func _ready() -> void:
         push_error("Failed to start TCP server on %s:%d (%d)" % [bind_host, port, listen_err])
     else:
         print("RL server listening on %s:%d" % [bind_host, port])
-    _reset_episode(-1)
+    _reset_episode(null)
+
+
+func _exit_tree() -> void:
+    _disconnect_client("Shutting down server")
+    if tcp_server.is_listening():
+        tcp_server.stop()
 
 
 func _process(_delta: float) -> void:
@@ -167,7 +176,7 @@ func _parse_messages() -> void:
             parser.data_array = recv_buffer.slice(0, needed)
             parser.get_u8() # type
             parser.get_u8() # has_seed
-            var seed := -1
+            var seed: Variant = null
             if has_seed == 1:
                 seed = parser.get_32()
 
@@ -226,14 +235,14 @@ func _dispatch_next_command() -> void:
 func _apply_action_once(delta: float) -> void:
     agent.rotate_y(current_action.w * max_yaw_rate * delta)
 
-    var local_input := Vector3(current_action.x, current_action.y, current_action.z)
-    if local_input.length() > 1.0:
-        local_input = local_input.normalized()
+    var local_movement_direction := Vector3(current_action.x, current_action.y, current_action.z)
+    if local_movement_direction.length() > 1.0:
+        local_movement_direction = local_movement_direction.normalized()
 
-    var world_direction := agent.global_transform.basis * local_input
+    var world_direction := agent.global_transform.basis * local_movement_direction
     agent.velocity = Vector3(
         world_direction.x * max_speed,
-        local_input.y * max_vertical_speed,
+        local_movement_direction.y * max_vertical_speed,
         world_direction.z * max_speed
     )
     agent.move_and_slide()
@@ -242,9 +251,12 @@ func _apply_action_once(delta: float) -> void:
         collided_during_step = true
 
 
-func _reset_episode(seed: int) -> void:
-    if seed >= 0:
-        rng.seed = seed
+func _reset_episode(seed: Variant) -> void:
+    if seed != null:
+        var normalized_seed := int(seed)
+        if normalized_seed < 0:
+            normalized_seed += 4294967296
+        rng.seed = normalized_seed
     else:
         rng.randomize()
 
@@ -259,18 +271,18 @@ func _reset_episode(seed: int) -> void:
     var attempts := 0
     while true:
         target.global_position = _random_spawn_position(target_height)
-        if target.global_position.distance_to(agent.global_position) >= 3.0:
+        if target.global_position.distance_to(agent.global_position) >= min_spawn_target_distance:
             break
         attempts += 1
-        if attempts > 16:
+        if attempts > MAX_SPAWN_ATTEMPTS:
             break
 
 
 func _random_spawn_position(height: float) -> Vector3:
     return Vector3(
-        rng.randf_range(-arena_half_extent_x + 1.5, arena_half_extent_x - 1.5),
+        rng.randf_range(-arena_half_extent_x + spawn_margin, arena_half_extent_x - spawn_margin),
         height,
-        rng.randf_range(-arena_half_extent_z + 1.5, arena_half_extent_z - 1.5)
+        rng.randf_range(-arena_half_extent_z + spawn_margin, arena_half_extent_z - spawn_margin)
     )
 
 

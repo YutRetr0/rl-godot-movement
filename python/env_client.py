@@ -6,6 +6,7 @@ import numpy as np
 
 MSG_RESET = 1
 MSG_STEP = 2
+MAX_OBS_DIM_SANITY_LIMIT = 4096
 
 
 class RLGodotClient:
@@ -81,7 +82,7 @@ class RLGodotClient:
     def _recv_response(self) -> Tuple[np.ndarray, float, bool]:
         header = self._recv_exact(4)
         (obs_dim,) = struct.unpack("<I", header)
-        if obs_dim == 0 or obs_dim > 4096:
+        if obs_dim == 0 or obs_dim > MAX_OBS_DIM_SANITY_LIMIT:
             raise ValueError(f"Invalid observation dimension from server: {obs_dim}")
 
         obs_bytes = self._recv_exact(obs_dim * 4)

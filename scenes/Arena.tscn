@@ -26,7 +26,7 @@ height = 1.2
 
 [sub_resource type="CapsuleMesh" id="CapsuleMesh_agent"]
 radius = 0.4
-mid_height = 1.2
+height = 1.2
 
 [sub_resource type="SphereMesh" id="SphereMesh_target"]
 radius = 0.4
